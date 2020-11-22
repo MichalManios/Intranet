@@ -1,0 +1,669 @@
+﻿@page "/zarzadzenia"
+@using Areszt_Śledczy_w_Łodzi.Models
+@using Areszt_Śledczy_w_Łodzi.Services
+
+@inject ZarzadzenieServices zarzadzenieServices
+@inject ActualizationContentServices actualizationServices
+@inject IFileUpload fileUpload
+@inject NavigationManager navigationManager
+
+
+<div class="row col-12 displayMy sticky">
+    <div class="col-12"><br /></div>
+
+    <div class="col-12" style="text-align:center;">
+        <button type="submit" class="col-lg-3 col-5 ButtonSubmit" @onclick="ChangeRepealedToActual">
+            Wyświetl obowiązujące zarządzenia
+        </button>
+        <button type="submit" class="col-lg-1 col-3 ButtonSubmit" @onclick="Search">
+            Znajdź
+        </button>
+        <button type="submit" class="col-lg-3 offset-lg-3 offset-1 col-5 ButtonSubmit" @onclick="ChangeActualToRepealed">
+            Wyświetl uchylone zarządzenia
+        </button>
+
+        @if (bSearch)
+        {
+            <div class="col-12"><br /></div>
+
+            <div class="col-10 displayMy">
+                <label class="Labels col-12">Wpisz szukaną frazę z tytułu Zarządzenia:</label>
+                <input class="col-8 Inputs" type="text" placeholder="Czego szukamy???" @bind="sFindingString" />
+                <div class="col-12"><br /></div>
+                <button type="submit" class="col-lg-1 col-3 ButtonSubmit" @onclick="FindZarzadzenie">
+                    Szukaj
+                </button>
+                <button type="submit" class="col-lg-1 col-3 ButtonSubmit" @onclick="HideSearch">
+                    /\
+                </button>
+                <button type="submit" class="col-lg-1 col-3 ButtonSubmit" @onclick="ShowAll">
+                    Wszystkie
+                </button>
+            </div>
+        }
+    </div>
+    <div class="col-12"><br /></div>
+
+    @if (bShowActual)
+    {
+        <div class="row col-12 displayMy">
+            <h1 id="HeaderStart" class="stress">OBOWIĄZUJĄCE ZARZĄDZENIA ARESZTU ŚLEDCZEGO W ŁODZI:</h1>
+        </div>
+    }
+    else
+    {
+        <div class="row col-12 displayMy">
+            <h1 id="HeaderStart" class="stress">UCHYLONE ZARZĄDZENIA ARESZTU ŚLEDCZEGO W ŁODZI:</h1>
+        </div>
+    }
+
+
+
+    <div class="col-12"><br /></div>
+</div>
+
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+
+
+@if (bSearch)
+{
+    <div class="col-12"><br /></div>
+    <div class="col-12"><br /></div>
+    <div class="col-12"><br /></div>
+    <div class="col-12"><br /></div>
+    <div class="col-12"><br /></div>
+    <div class="col-12"><br /></div>
+    <div class="col-12"><br /></div>
+    <div class="col-12"><br /></div>
+}
+
+
+<AuthorizeView Roles="ADMIN">
+    <Authorized>
+        <div class="row col-12 admin">
+
+            @if (!bActualization)
+            {
+                <div class="col-1">
+                    <label class="Labels">NR</label>
+                    <input class="col-10 Inputs" type="number" @bind="zarzadzenieViewModel.Number" placeholder="NR" />
+                </div>
+
+                <div class="col-1">
+                    <label class="Labels">Rok</label>
+                    <input class="col-12 Inputs" type="number" @bind="zarzadzenieViewModel.Year" placeholder="Rok" />
+                </div>
+
+                <div class="col-5">
+                    <textarea @bind="zarzadzenieViewModel.ContentOfDirective" class="ContentLink" name="contentLink" placeholder="Tutaj wpisz treść tytułu Zarządzenia...">@zarzadzenieViewModel.ContentOfDirective</textarea>
+                </div>
+
+                <div class="col-3" style="text-align:left;">
+                    <InputFile OnChange="ChoiceFileToUpload"></InputFile>
+                    @if (selectedFiles != null)
+                    {
+                        <p>Nazwa pliku:@selectedFiles.Name</p>
+                        <p>Rozmiar pliku:@selectedFiles.Size B</p>
+                    }
+                </div>
+                <div class="col-2" style="text-align:left;">
+                    <button type="submit" class="col-12 ButtonSubmit" @onclick="UploadFile">Zamieść wybrany plik na serwerze</button>
+                    <p id="Message1">@Message</p>
+                </div>
+                <div class="col-2">
+                    <div class="col-12"><br /></div>
+                    <input type="checkbox" id="instruction" name="instruction" readonly disabled="disabled">
+                    @if (bActualization)
+                    {
+                        <label class="Labels" for="instruction"> Aktualizacja</label>
+                    }
+                    else
+                    {
+                        <label class="Labels" for="instruction"> Bez aktualizacji</label>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="col-1">
+                    <label class="Labels">NR</label>
+                    <input class="col-10 Inputs" type="number" @bind-value="zarzadzenieViewModel.Number" placeholder="NR" readonly />
+                </div>
+
+                <div class="col-1">
+                    <label class="Labels">Rok</label>
+                    <input class="col-12 Inputs" type="number" @bind-value="zarzadzenieViewModel.Year" placeholder="Rok" readonly />
+                </div>
+
+                <div class="col-5">
+                    <textarea readonly @bind="zarzadzenieViewModel.ContentOfDirective" class="ContentLink" name="contentLink" placeholder="Tutaj wpisz treść tytułu Zarządzenia...">@zarzadzenieViewModel.ContentOfDirective</textarea>
+                </div>
+
+                <div class="col-12"><br /></div>
+
+                <div class="col-2">
+                    <div class="col-12"><br /></div>
+                    <input type="checkbox" id="instruction" name="instruction" disabled="disabled" checked="checked" readonly>
+                    @if (bActualization)
+                    {
+                        <label class="Labels" for="instruction"> Aktualizacja</label>
+                    }
+                    else
+                    {
+                        <label class="Labels" for="instruction"> Bez aktualizacji</label>
+                    }
+                </div>
+            }
+
+            @if (bActualization)
+            {
+                <div class="col-3">
+                    <div class="col-12"><br /></div>
+                    <input class="col-12 Inputs" style="color:red; font-weight:bold;" type="text" value="AKTUALIZACJA: ZARZĄDZENIE " readonly />
+                </div>
+
+                <div class="col-1">
+                    <label class="Labels">NR</label>
+                    <input class="col-10 Inputs" style="color:red; font-weight:bold;" type="number" placeholder="NR" @bind="actualizationView.Number" />
+                </div>
+                <div class="col-1">
+                    <label class="Labels">Rok</label>
+                    <input class="col-12 Inputs" style="color:red; font-weight:bold;" type="number" placeholder="Rok" @bind="actualizationView.Year" />
+                </div>
+
+                @if (actualizationView.Content != "")
+                {
+                    <div class="col-2" style="text-align:left;">
+                        <button type="submit" class="col-12 ButtonSubmit" @onclick="@(()=>DeleteActualization(IdZarzadzenie))">Usuń zapis o aktualizacji</button>
+                    </div>
+                }
+            }
+            else
+            {
+                @foreach (var actualizationView in actualizationViewModels)
+                {
+                    if (IdZarzadzenie == actualizationView.ZarzadzenieId)
+                    {
+                        <div class="col-3">
+                            <div class="col-12"><br /></div>
+                            <input class="col-12 Inputs" style="color:red; font-weight:bold;" type="text" value="AKTUALIZACJA: ZARZĄDZENIE " readonly />
+                        </div>
+
+                        <div class="col-1">
+                            <label class="Labels">NR</label>
+                            <input class="col-10 Inputs" style="color:red; font-weight:bold;" type="number" placeholder="NR" @bind="actualizationView.Number" readonly />
+                        </div>
+
+                        <div class="col-1">
+                            <label class="Labels">Rok</label>
+                            <input class="col-12 Inputs" style="color:red; font-weight:bold;" type="number" placeholder="Rok" @bind="actualizationView.Year" readonly />
+                        </div>
+                    }
+                }
+            }
+
+        </div>
+
+        <div class="col-12"><br /></div>
+
+        @if (!bActualization)
+        {
+            <div class="col-12" style="text-align:center">
+                <button type="submit" class="col-lg-3 col-5 ButtonSubmit" @onclick="@SaveZarzadzenie">
+                    Zapisz zarządzenie
+                </button>
+                <div class="col-12"><br /></div>
+                @if (bCheckSave == false)
+                {
+                    <p style="color:red;">@Message2</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="col-12" style="text-align:center">
+                <button type="submit" class="col-lg-3 col-5 ButtonSubmit" @onclick="@SaveActualization">
+                    Zapisz aktualizację
+                </button>
+                <div class="col-12"><br /></div>
+                @if (bCheckSave == false)
+                {
+                    <p style="color:red;">@MessageActualization</p>
+                }
+            </div>
+        }
+        <div class="col-12"><br /></div>
+        <div class="col-12"><br /></div>
+        <div class="col-12"><br /></div>
+    </Authorized>
+</AuthorizeView>
+
+
+
+
+
+
+
+@if (zarzadzenieViewModels != null)
+{
+    @foreach (var zarzadzenie in zarzadzenieViewModels.AsEnumerable().Reverse())
+    {
+        @if (bShowActual)
+        {
+            @if (zarzadzenie.Actual)
+            {
+                @if (zarzadzenieViewModels.Count == 1)
+                {
+                    sYear = zarzadzenie.Year.ToString();
+
+                    <div class="col-12"><br /></div>
+
+                    <div class="row col-12]">
+                        <h3 id="HeaderStart" class="year">@zarzadzenie.Year r.:</h3>
+                    </div>
+
+                    <div class="col-12"><br /></div>
+                }
+                else
+                {
+                    @if (sYear != zarzadzenie.Year.ToString())
+                    {
+                        sYear = zarzadzenie.Year.ToString();
+
+                        <div class="col-12"><br /></div>
+
+                        <div class="row col-12]">
+                            <h3 id="HeaderStart" class="year">@zarzadzenie.Year r.:</h3>
+                        </div>
+
+                        <div class="col-12"><br /></div>
+                    }
+                }
+            }
+        }
+        else
+        {
+            @if (!zarzadzenie.Actual)
+            {
+                @if (zarzadzenieViewModels.Count == 1)
+                {
+                    sYear = zarzadzenie.Year.ToString();
+
+                    <div class="col-12"><br /></div>
+
+                    <div class="row col-12]">
+                        <h3 id="HeaderStart" class="year">@zarzadzenie.Year r.:</h3>
+                    </div>
+
+                    <div class="col-12"><br /></div>
+                }
+                else
+                {
+                    @if (sYear != zarzadzenie.Year.ToString())
+                    {
+                        sYear = zarzadzenie.Year.ToString();
+
+                        <div class="col-12"><br /></div>
+
+                        <div class="row col-12]">
+                            <h3 id="HeaderStart" class="year">@zarzadzenie.Year r.:</h3>
+                        </div>
+
+                        <div class="col-12"><br /></div>
+                    }
+                }
+            }
+
+        }
+
+        <ul class="MyList">
+            @if (bShowActual)
+            {
+                @if (zarzadzenie.Actual)
+                {
+                    <li>
+                        @if (!zarzadzenie.HTML)
+                        {
+                            <a class="zarz" href="@($"http://localhost:5000/Zarzadzenia/zarz_{@zarzadzenie.Number}_{@zarzadzenie.Year}.pdf")" target="_blank">
+                                @zarzadzenie.Number/@zarzadzenie.Year @zarzadzenie.ContentOfDirective
+                                @foreach (var actualizationView in actualizationViewModels)
+                                {
+                                    if (zarzadzenie.Id == actualizationView.ZarzadzenieId)
+                                    {
+                                        <p style="color:red; font-weight:bold;" type="text">AKTUALIZACJA: ZARZĄDZENIE NR @actualizationView.Number / @actualizationView.Year</p>
+                                    }
+                                }
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="zarz" href="@($"http://localhost:5000/Zarzadzenia/zarz_{@zarzadzenie.Number}_{@zarzadzenie.Year}.html")" target="_blank">
+                                @zarzadzenie.Number/@zarzadzenie.Year @zarzadzenie.ContentOfDirective
+                                @foreach (var actualizationView in actualizationViewModels)
+                                {
+                                    if (zarzadzenie.Id == actualizationView.ZarzadzenieId)
+                                    {
+                                        <p style="color:red; font-weight:bold;" type="text">AKTUALIZACJA: ZARZĄDZENIE NR @actualizationView.Number / @actualizationView.Year</p>
+                                    }
+                                }
+                            </a>
+                        }
+                    </li>
+
+                    <AuthorizeView Roles="ADMIN">
+                        <Authorized>
+                            <div class="col-8" style="display:inline-block;">
+                                <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => EditZarzadzenie(zarzadzenie.Id))">
+                                    Edytuj
+                                </button>
+                                <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => ActualizationZarzadzenie(zarzadzenie.Id))">
+                                    Aktualizacja
+                                </button>
+                                <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => MoveZarzadzenie(zarzadzenie.Id))">
+                                    Uchylone
+                                </button>
+                                <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => DeleteZarzadzenie(zarzadzenie.Id))">
+                                    Skasuj
+                                </button>
+                            </div>
+                        </Authorized>
+                    </AuthorizeView>
+                }
+            }
+            else
+            {
+                @if (!zarzadzenie.Actual)
+                {
+                    <li>
+                         @if (!zarzadzenie.HTML)
+                        {
+                            <a class="zarz" href="@($"http://localhost:5000/Zarzadzenia/zarz_{@zarzadzenie.Number}_{@zarzadzenie.Year}.pdf")" target="_blank">
+                                @zarzadzenie.Number/@zarzadzenie.Year @zarzadzenie.ContentOfDirective
+                                @foreach (var actualizationView in actualizationViewModels)
+                                {
+                                    if (zarzadzenie.Id == actualizationView.ZarzadzenieId)
+                                    {
+                                        <p style="color:red; font-weight:bold;" type="text">AKTUALIZACJA: ZARZĄDZENIE NR @actualizationView.Number / @actualizationView.Year</p>
+                                    }
+                                }
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="zarz" href="@($"http://localhost:5000/Zarzadzenia/zarz_{@zarzadzenie.Number}_{@zarzadzenie.Year}.html")" target="_blank">
+                                @zarzadzenie.Number/@zarzadzenie.Year @zarzadzenie.ContentOfDirective
+                                @foreach (var actualizationView in actualizationViewModels)
+                                {
+                                    if (zarzadzenie.Id == actualizationView.ZarzadzenieId)
+                                    {
+                                        <p style="color:red; font-weight:bold;" type="text">AKTUALIZACJA: ZARZĄDZENIE NR @actualizationView.Number / @actualizationView.Year</p>
+                                    }
+                                }
+                            </a>
+                        }
+                    </li>
+                    <AuthorizeView Roles="ADMIN">
+                        <Authorized>
+                            <div class="col-8" style="display:inline-block;">
+                                <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => EditZarzadzenie(zarzadzenie.Id))">
+                                    Edytuj
+                                </button>
+                                <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => ActualizationZarzadzenie(zarzadzenie.Id))">
+                                    Aktualizacja
+                                </button>
+                                <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => MoveZarzadzenie(zarzadzenie.Id))">
+                                    Aktualne
+                                </button>
+                                <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => DeleteZarzadzenie(zarzadzenie.Id))">
+                                    Skasuj
+                                </button>
+                            </div>
+                        </Authorized>
+                    </AuthorizeView>
+                }
+            }
+        </ul>
+    }
+}
+
+
+
+
+
+
+
+
+@code {
+
+    private bool bShowActual = true;
+    ZarzadzenieViewModel zarzadzenieViewModel;
+    ActualizationViewModel actualizationView;
+    IFileListEntry selectedFiles;
+    string Message { get; set; }
+    string Message2 { get; set; }
+    bool bCheckSave { get; set; }
+    string sURLToFile { get; set; }
+    int IdZarzadzenie { get; set; }
+    List<ZarzadzenieViewModel> zarzadzenieViewModels;
+    List<ActualizationViewModel> actualizationViewModels;
+    bool bActualization { get; set; }
+    bool bSearch { get; set; }
+    string sYear { get; set; }
+    string MessageActualization { get; set; }
+    string sFindingString { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        zarzadzenieViewModel = new ZarzadzenieViewModel();
+        actualizationView = new ActualizationViewModel();
+        Message = "Nie wybrałeś żadnego pliku";
+        Message2 = "Nie wszystkie wymagane pola zostały wypełnione!!!";
+        MessageActualization = "Nie wszystkie wymagane pola zostały wypełnione!!!";
+        bCheckSave = true;
+        bSearch = false;
+        sURLToFile = "";
+        sFindingString = "";
+        sYear = "0";
+        bActualization = false;
+        zarzadzenieViewModels = new List<ZarzadzenieViewModel>();
+        actualizationViewModels = new List<ActualizationViewModel>();
+        IdZarzadzenie = -1;
+        await Task.Run(() =>
+        {
+            if (bShowActual) zarzadzenieViewModels = zarzadzenieServices.GetAllZarzadzenia().OrderBy(x => x.Year).ThenBy(x => x.Number).Where(x => x.Actual == true).ToList();
+            else zarzadzenieViewModels = zarzadzenieServices.GetAllZarzadzenia().OrderBy(x => x.Year).ThenBy(x => x.Number).Where(x => x.Actual == false).ToList();
+            actualizationViewModels = actualizationServices.GetAll();
+        });
+    }
+
+    async Task ChoiceFileToUpload(IFileListEntry[] files)
+    {
+        selectedFiles = files.FirstOrDefault();
+        if (selectedFiles.Name == "zarz_" + zarzadzenieViewModel.Number + "_" + zarzadzenieViewModel.Year + ".pdf" || selectedFiles.Name == "zarz_" + zarzadzenieViewModel.Number + "_" + zarzadzenieViewModel.Year + ".html")
+        {
+            if (selectedFiles != null)
+            {
+                await fileUpload.UploadAsync(selectedFiles, "Zarzadzenia");
+
+                Message = $"Plik oczekuje na upload: {selectedFiles.Name}           Rozmiar: {selectedFiles.Size} Bytes";
+            }
+            this.StateHasChanged();
+        }
+        else
+        {
+            selectedFiles = null;
+            Message = "Nazwa pliku nie jest zgodna z szablonem. (NR_ROK)";
+        }
+    }
+
+    void UploadFile()
+    {
+        if (selectedFiles != null)
+        {
+            var dotName = selectedFiles.Name.ToString();
+            int x = dotName.IndexOf('.');
+            dotName = dotName.Remove(0, x + 1);
+            if (dotName == "pdf") zarzadzenieViewModel.HTML = false;
+            else zarzadzenieViewModel.HTML = true;
+
+
+            Message = $"Trwa wrzucanie pliku...";
+            fileUpload.SendToServer();
+            Message = $"Zakończono ładowanie pliku: {selectedFiles.Name}           Rozmiar: {selectedFiles.Size} Bytes";
+            sURLToFile = @"http://localhost:5000/Zarzadzenia/" + selectedFiles.Name;
+            this.StateHasChanged();
+
+        }
+        else
+        {
+            Message = $"Nie ma wybranego pliku do umieszczenia go na serwerze!!!";
+        }
+    }
+
+    void SaveZarzadzenie()
+    {
+        bCheckSave = CheckCanSafe();
+        if (bCheckSave)
+        {
+            if (bShowActual) zarzadzenieViewModel.Actual = true;
+            else zarzadzenieViewModel.Actual = false;
+            zarzadzenieServices.SaveUpdateZarzadzenie(IdZarzadzenie, zarzadzenieViewModel);
+            navigationManager.NavigateTo("/zarzadzenia", true);
+
+        }
+    }
+
+    void ChangeActualToRepealed()
+    {
+        bShowActual = false;
+        zarzadzenieViewModels = zarzadzenieServices.GetAllZarzadzenia().OrderBy(x => x.Year).ThenBy(x => x.Number).Where(x => x.Actual == false).ToList();
+    }
+
+    void ChangeRepealedToActual()
+    {
+        bShowActual = true;
+        zarzadzenieViewModels = zarzadzenieServices.GetAllZarzadzenia().OrderBy(x => x.Year).ThenBy(x => x.Number).Where(x => x.Actual == true).ToList();
+    }
+
+    void Search()
+    {
+        bSearch = true;
+    }
+
+    void EditZarzadzenie(int IdZarzadzenie)
+    {
+        sURLToFile = "true";
+        this.IdZarzadzenie = IdZarzadzenie;
+        var zarzadzenieVM = zarzadzenieServices.GetZarzadzenieById(IdZarzadzenie);
+        zarzadzenieViewModel = zarzadzenieVM;
+
+        var actualizationVM = actualizationServices.GetActualizationContentByZarzadzenieId(this.IdZarzadzenie);
+        actualizationView = actualizationVM;
+
+        bActualization = false;
+        navigationManager.NavigateTo("/zarzadzenia", false);
+    }
+    void DeleteZarzadzenie(int IdZarzadzenie)
+    {
+        zarzadzenieServices.DeleteZarzadzenie(IdZarzadzenie);
+        navigationManager.NavigateTo("/zarzadzenia", true);
+    }
+
+    bool CheckCanSafe()
+    {
+        if (!bActualization)
+        {
+            if (zarzadzenieViewModel.ContentOfDirective == "" || zarzadzenieViewModel.Number == 0 || zarzadzenieViewModel.Year == 0 || sURLToFile == "") return false;
+        }
+        else
+        {
+            if (actualizationView.Number == 0 || actualizationView.Year == 0) return false;
+        }
+        return true;
+    }
+
+    void MoveZarzadzenie(int IdZarzadzenie)
+    {
+        this.IdZarzadzenie = IdZarzadzenie;
+        var zarzadzenieVM = zarzadzenieServices.GetZarzadzenieById(this.IdZarzadzenie);
+        if (bShowActual) zarzadzenieVM.Actual = false;
+        else zarzadzenieVM.Actual = true;
+        zarzadzenieServices.SaveUpdateZarzadzenie(this.IdZarzadzenie, zarzadzenieVM);
+
+        navigationManager.NavigateTo("/zarzadzenia", true);
+    }
+
+    void SaveActualization()
+    {
+        bCheckSave = CheckCanSafe();
+        if (bCheckSave)
+        {
+            actualizationView.Content = "AKTUALIZACJA: Zarządzenie " + actualizationView.Number + "/" + actualizationView.Year;
+            actualizationView.ZarzadzenieId = IdZarzadzenie;
+            actualizationServices.SaveUpdateActualizationContent(IdZarzadzenie, actualizationView);
+            bActualization = false;
+            navigationManager.NavigateTo("/zarzadzenia", true);
+        }
+    }
+
+    void ActualizationZarzadzenie(int IdZarzadzenie)
+    {
+        this.IdZarzadzenie = IdZarzadzenie;
+        var zarzadzenieVM = zarzadzenieServices.GetZarzadzenieById(this.IdZarzadzenie);
+        zarzadzenieViewModel = zarzadzenieVM;
+
+
+        this.IdZarzadzenie = IdZarzadzenie;
+        var actualizationVM = actualizationServices.GetActualizationContentByZarzadzenieId(this.IdZarzadzenie);
+        if (actualizationVM == null)
+        {
+            actualizationView = new ActualizationViewModel()
+            {
+                Content = "",
+                Number = 0,
+                Year = 0,
+                ZarzadzenieId = this.IdZarzadzenie
+            };
+        }
+        else actualizationView = actualizationVM;
+
+        bActualization = true;
+        navigationManager.NavigateTo("/zarzadzenia", false);
+    }
+
+    void HideSearch()
+    {
+        bSearch = false;
+    }
+
+    void DeleteActualization(int IdZarzadzenie)
+    {
+        actualizationServices.DeleteActualization(IdZarzadzenie);
+        navigationManager.NavigateTo("/zarzadzenia", true);
+    }
+
+    void FindZarzadzenie()
+    {
+        if (bShowActual) zarzadzenieViewModels = zarzadzenieServices.GetAllZarzadzenia().Where(x => x.ContentOfDirective.Contains(sFindingString)).OrderBy(x => x.Year).ThenBy(x => x.Number).Where(x => x.Actual == true).ToList();
+        else zarzadzenieViewModels = zarzadzenieServices.GetAllZarzadzenia().Where(x => x.ContentOfDirective.Contains(sFindingString)).OrderBy(x => x.Year).ThenBy(x => x.Number).Where(x => x.Actual == false).ToList();
+        sFindingString = "";
+    }
+
+    void ShowAll()
+    {
+        sYear = "0";
+        sFindingString = "";
+        if (bShowActual) zarzadzenieViewModels = zarzadzenieServices.GetAllZarzadzenia().OrderBy(x => x.Year).ThenBy(x => x.Number).Where(x => x.Actual == true).ToList();
+        else zarzadzenieViewModels = zarzadzenieServices.GetAllZarzadzenia().OrderBy(x => x.Year).ThenBy(x => x.Number).Where(x => x.Actual == false).ToList();
+    }
+}

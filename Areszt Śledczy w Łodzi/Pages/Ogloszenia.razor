@@ -1,0 +1,441 @@
+﻿@page "/ogloszenia"
+
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Hosting
+@using Areszt_Śledczy_w_Łodzi.Services
+@inject IFileUpload fileUpload
+@inject IJSRuntime JsRuntime
+
+@inject OgloszenieServices ogloszenieServices
+@inject FontSizeServices fontServices
+@inject ColorServices colorServices
+
+@inject ASMapper asMapper
+@inject NavigationManager navigationManager
+
+<div class="row col-12 displayMy sticky">
+    <h1 id="HeaderStart">WAŻNE OGŁOSZENIA!!!</h1>
+</div>
+
+<AuthorizeView Roles="ADMIN">
+    <Authorized>
+
+        <div class="col-12"><br /></div>
+        <div class="col-12"><br /></div>
+        <div class="col-12"><br /></div>
+        <div class="col-12"><br /></div>
+        <div class="col-12"><br /></div>
+        <div class="col-12"><br /></div>
+
+        <div class="row col-12 admin">
+
+
+            @switch (scaseFontColor)
+            {
+                case "20pxniebieski":
+                    <div class="col-6">
+                        <textarea @bind="sContentOgloszenie" class="ContentOgl" name="content" placeholder="Treść ogłoszenia..." style="color:#1d1880 !important; font-size:20px !important">@sContentOgloszenie</textarea>
+                    </div>
+                    break;
+                case "20pxzielony":
+                    <div class="col-6">
+                        <textarea @bind="sContentOgloszenie" class="ContentOgl" name="content" placeholder="Treść ogłoszenia..." style="color:#1CD10C !important; font-size:20px !important">@sContentOgloszenie</textarea>
+                    </div>
+                    break;
+                case "20pxczerwony":
+                    <div class="col-6">
+                        <textarea @bind="sContentOgloszenie" class="ContentOgl" name="content" placeholder="Treść ogłoszenia..." style="color:#B80211 !important; font-size:20px !important">@sContentOgloszenie</textarea>
+                    </div>
+                    break;
+                case "36pxniebieski":
+                    <div class="col-6">
+                        <textarea @bind="sContentOgloszenie" class="ContentOgl" name="content" placeholder="Treść ogłoszenia..." style="color:#1d1880 !important; font-size:36px !important">@sContentOgloszenie</textarea>
+                    </div>
+                    break;
+                case "36pxzielony":
+                    <div class="col-6">
+                        <textarea @bind="sContentOgloszenie" class="ContentOgl" name="content" placeholder="Treść ogłoszenia..." style="color:#1CD10C !important; font-size:36px !important">@sContentOgloszenie</textarea>
+                    </div>
+                    break;
+                case "36pxczerwony":
+                    <div class="col-6">
+                        <textarea @bind="sContentOgloszenie" class="ContentOgl" name="content" placeholder="Treść ogłoszenia..." style="color:#B80211 !important; font-size:36px !important">@sContentOgloszenie</textarea>
+                    </div>
+                    break;
+                case "44pxniebieski":
+                    <div class="col-6">
+                        <textarea @bind="sContentOgloszenie" class="ContentOgl" name="content" placeholder="Treść ogłoszenia..." style="color:#1d1880 !important; font-size:44px !important">@sContentOgloszenie</textarea>
+                    </div>
+                    break;
+                case "44pxzielony":
+                    <div class="col-6">
+                        <textarea @bind="sContentOgloszenie" class="ContentOgl" name="content" placeholder="Treść ogłoszenia..." style="color:#1CD10C !important; font-size:44px !important">@sContentOgloszenie</textarea>
+                    </div>
+                    break;
+                case "44pxczerwony":
+                    <div class="col-6">
+                        <textarea @bind="sContentOgloszenie" class="ContentOgl" name="content" placeholder="Treść ogłoszenia..." style="color:#B80211 !important; font-size:44px !important">@sContentOgloszenie</textarea>
+                    </div>
+                    break;
+            }
+
+
+
+            <div class="col-3 picker">
+                <label class="col-12">Kolor czcionki:</label>
+                <div class="col-4 color1"></div>
+                <div class="col-4 color2"></div>
+                <div class="col-4 color3"></div>
+
+                <br />
+
+                <div class="col-4 offset-4 radio">
+                    <input type="radio" id="niebieski" value="niebieski" name="color" @onchange="ColorSelection" checked=@(scolor.Equals("niebieski",StringComparison.OrdinalIgnoreCase))>
+
+                    <input type="radio" id="zielony" value="zielony" name="color" @onchange="ColorSelection" checked=@(scolor.Equals("zielony",StringComparison.OrdinalIgnoreCase))>
+
+                    <input type="radio" id="czerwony" value="czerwony" name="color" @onchange="ColorSelection" checked=@(scolor.Equals("czerwony",StringComparison.OrdinalIgnoreCase))>
+                </div>
+
+
+            </div>
+
+            <div class="col-3 fonts">
+                <label class="col-12">Wielkość czcionki:</label>
+                <select class="col-6" name="font" id="font" @onchange="FontSelection">
+                    <option value="20" selected=@(sfont.Equals("20px",StringComparison.OrdinalIgnoreCase))>20</option>
+                    <option value="36" selected=@(sfont.Equals("36px",StringComparison.OrdinalIgnoreCase))>36</option>
+                    <option value="44" selected=@(sfont.Equals("44px",StringComparison.OrdinalIgnoreCase))>44</option>
+                </select>
+            </div>
+
+            <div class="col-3" style="text-align:left">
+                <button type="submit" class="col-lg-3 col-5 ButtonSubmit" @onclick="AddLinkFunction">
+                    Dodaj Link
+                </button>
+            </div>
+
+            @if (bLinkAdd == true)
+            {
+                <div class="col-12"><br /></div>
+                <div class="col-5">
+                    <textarea @bind="sContentLink" class="ContentLink" name="content" placeholder="Jaka treść linka." style="color:#1d1880 !important; font-size:20px !important">@sContentLink</textarea>
+                </div>
+
+                @if ((bURLlink == false || bURLlink == true) && bURLfile == false)
+                {
+                    <div class="col-1" style="text-align:left">
+                        <button type="submit" class="col-12 ButtonSubmit" @onclick="AddFile">
+                            Dodaj ścieżkę do pliku
+                        </button>
+                    </div>
+                }
+
+                @if ((bURLfile == false || bURLfile == true) && bURLlink == false)
+                {
+                    <div class="col-1" style="text-align:left">
+                        <button type="submit" class="col-12 ButtonSubmit" @onclick="ViewLink">
+                            Dodaj ścieżkę do linku
+                        </button>
+                    </div>
+                }
+                @if (bURLfile == true && bURLlink == false)
+                {
+                    <div class="col-3" style="text-align:left;">
+                        <InputFile OnChange="ChoiceFileToUpload"></InputFile>
+                        @if (selectedFiles != null)
+                        {
+                            <p>Nazwa pliku:@selectedFiles.Name</p>
+                            <p>Rozmiar pliku:@selectedFiles.Size B</p>
+                        }
+                    </div>
+                    <div class="col-3" style="text-align:left;">
+                        <button type="submit" class="col-12 ButtonSubmit" @onclick="UploadFile">Zamieść wybrany plik na serwerze</button>
+                        <p id="Message1">@Message</p>
+                    </div>
+                }
+
+                @if (bURLlink == true)
+                {
+                    <div class="col-3">
+                        <textarea @bind="sURL" class="ContentLink" name="content" placeholder="Adres www" style="color:#1d1880 !important; font-size:20px !important">@sURL</textarea>
+                    </div>
+                }
+            }
+
+
+            <div class="col-12"><br /></div>
+
+            <div class="col-12" style="text-align:center">
+                <button type="submit" class="col-lg-3 col-5 ButtonSubmit" @onclick="@SaveOgloszenie">
+                    Zapisz ogłoszenie
+                </button>
+                @if (bCheckSave == false)
+                {
+                    <p style="color:red;">@Message2</p>
+                }
+            </div>
+
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+
+
+<div class="row col-12 displayMy" style="text-align:center">
+
+    @if (ogloszenieViewModels != null)
+    {
+        @foreach (var ogloszenie in ogloszenieViewModels.AsEnumerable().Reverse())
+        {
+            <div class="col-lg-8 warning" style="display:inline-block; color:@Color(ogloszenie.ColorId) !important; font-size:@Font(ogloszenie.SizeFontId) !important">
+                @ogloszenie.Advertisement
+
+                @if (!string.IsNullOrEmpty(ogloszenie.AdvertisementURL))
+                {
+                    <a style="text-decoration:underline !important" href=@ogloszenie.URL target="_blank"> @ogloszenie.AdvertisementURL</a>
+                }
+
+            </div>
+
+            <AuthorizeView Roles="ADMIN">
+                <Authorized>
+                    <div class="col-4" style="display:inline-block;">
+                        <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => EditOgloszenie(ogloszenie.Id))">
+                            Edytuj
+                        </button>
+                        <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => DeleteOgloszenie(ogloszenie.Id))">
+                            Skasuj
+                        </button>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+
+            <div class="col-12"><br /></div>
+        }
+    }
+
+
+
+
+
+</div>
+
+@code {
+    string sContentOgloszenie { get; set; }
+    string sContentLink { get; set; }
+    string scolor { get; set; }
+    string sfont { get; set; }
+    string scaseFontColor { get; set; }
+    string sURL { get; set; }
+    string sURLToFile { get; set; }
+    bool bLinkAdd { get; set; }
+    bool bURLlink { get; set; }
+    bool bURLfile { get; set; }
+    bool bBlockSaving { get; set; }
+    int IdEditingOgloszenie { get; set; }
+    List<Areszt_Śledczy_w_Łodzi.Models.OgloszenieViewModel> ogloszenieViewModels;
+    Areszt_Śledczy_w_Łodzi.Models.OgloszenieViewModel ogloszenieViewModel;
+    List<ASdatabase.Color> colors;
+    string Message2 { get; set; }
+    bool bCheckSave { get; set; }
+
+    string Message = "Nie wybrałeś żadnego pliku";
+    IFileListEntry selectedFiles;
+
+    async Task ChoiceFileToUpload(IFileListEntry[] files)
+    {
+        bBlockSaving = true;
+        selectedFiles = files.FirstOrDefault();
+        if (selectedFiles != null)
+        {
+            await fileUpload.UploadAsync(selectedFiles, "Ogloszenia");
+
+            Message = $"Plik oczekuje na upload: {selectedFiles.Name}           Rozmiar: {selectedFiles.Size} Bytes";
+        }
+        this.StateHasChanged();
+    }
+
+    void UploadFile()
+    {
+        if (selectedFiles != null)
+        {
+            Message = $"Trwa wrzucanie pliku...";
+            fileUpload.SendToServer();
+            Message = $"Zakończono ładowanie pliku: {selectedFiles.Name}           Rozmiar: {selectedFiles.Size} Bytes";
+            sURLToFile = @"http://localhost:5000/Ogloszenia/" + selectedFiles.Name;
+            this.StateHasChanged();
+
+        }
+        else
+        {
+            Message = $"Nie ma wybranego pliku do umieszczenia go na serwerze!!!";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        scolor = "niebieski";
+        sfont = "20px";
+        scaseFontColor = sfont + scolor;
+        IdEditingOgloszenie = -1;
+        sContentOgloszenie = "";
+        sContentLink = "";
+        Message2 = "Nie wszystkie pola wymagane zostały wypełnione!!!";
+        sURL = "";
+        sURLToFile = "";
+        bLinkAdd = false;
+        bURLlink = false;
+        bURLfile = false;
+        bBlockSaving = false;
+        bCheckSave = true;
+
+        ogloszenieViewModels = new List<Models.OgloszenieViewModel>();
+        ogloszenieViewModel = new Models.OgloszenieViewModel();
+        colors = new List<ASdatabase.Color>();
+        await Task.Run(() =>
+        {
+            colors = colorServices.GetAllColors();
+
+            ogloszenieViewModels = ogloszenieServices.GetAllOgloszenia();
+        });
+    }
+
+    void ColorSelection(ChangeEventArgs args)
+    {
+        scolor = args.Value.ToString();
+        scaseFontColor = sfont + scolor;
+    }
+
+    void FontSelection(ChangeEventArgs args)
+    {
+        sfont = args.Value.ToString() + "px";
+        scaseFontColor = sfont + scolor;
+    }
+
+    void EditOgloszenie(int OgloszenieId)
+    {
+        var OgloszenieEntity = ogloszenieServices.FindOgloszenieById(OgloszenieId);
+        sContentOgloszenie = OgloszenieEntity.Advertisement;
+        var colorEntity = colorServices.FindColorById(OgloszenieEntity.ColorId);
+        scolor = colorEntity.ColorName.ToLower();
+        var fontEntity = fontServices.FindFontSizeById(OgloszenieEntity.SizeFontId);
+        sfont = fontEntity.FontSize.ToString() + "px";
+        IdEditingOgloszenie = OgloszenieEntity.Id;
+        scaseFontColor = sfont + scolor;
+
+        sContentLink = OgloszenieEntity.AdvertisementURL;
+        sURL = OgloszenieEntity.URL;
+        navigationManager.NavigateTo("/ogloszenia", false);
+    }
+
+    void SaveOgloszenie()
+    {
+        var colorId = colorServices.FindColorByName(scolor);
+        var fontId = fontServices.FindFontSizeBySize(sfont);
+        var ogloszenieEntity = ogloszenieServices.FindOgloszenieById(IdEditingOgloszenie);
+        ogloszenieViewModel = asMapper.Map(ogloszenieEntity);
+        if (bURLfile) sURL = sURLToFile;
+
+        bCheckSave = CheckCanSafe();
+        if (bCheckSave)
+        {
+            if (ogloszenieViewModel == null)
+            {
+                ogloszenieViewModel = new Models.OgloszenieViewModel()
+                {
+                    Advertisement = sContentOgloszenie,
+                    ColorId = colorId.Id,
+                    SizeFontId = fontId.Id,
+                    AdvertisementURL = sContentLink,
+                    URL = sURL
+
+                };
+                ogloszenieServices.SaveUpdateOgloszenie(IdEditingOgloszenie, ogloszenieViewModel);
+
+                bLinkAdd = false;
+                bURLlink = false;
+                bURLfile = false;
+
+                navigationManager.NavigateTo("/ogloszenia", true);
+            }
+            else
+            {
+                ogloszenieViewModel.Advertisement = sContentOgloszenie;
+                ogloszenieViewModel.ColorId = colorId.Id;
+                ogloszenieViewModel.SizeFontId = fontId.Id;
+                ogloszenieViewModel.AdvertisementURL = sContentLink;
+                ogloszenieViewModel.URL = sURL;
+
+                ogloszenieServices.SaveUpdateOgloszenie(IdEditingOgloszenie, ogloszenieViewModel);
+                bLinkAdd = false;
+                bURLlink = false;
+                bURLfile = false;
+                navigationManager.NavigateTo("/ogloszenia", true);
+            }
+        }
+
+    }
+
+    void DeleteOgloszenie(int IdOgloszenie)
+    {
+        ogloszenieServices.DeleteOgloszenie(IdOgloszenie);
+        navigationManager.NavigateTo("/ogloszenia", true);
+    }
+
+    string Color(int ColorId)
+    {
+        var color = colors.Where(x => x.Id == ColorId).FirstOrDefault();//colorServices.FindColorById(ColorId);
+        return color.ColorValue;
+    }
+
+    string Font(int FontId)
+    {
+        var font = fontServices.FindFontSizeById(FontId);
+        return font.FontSize.ToString() + "px";
+    }
+
+    void AddLinkFunction()
+    {
+        bLinkAdd = true;
+    }
+
+    void ViewLink()
+    {
+        bURLlink = true;
+        bURLfile = false;
+    }
+
+    void AddFile()
+    {
+        bURLfile = true;
+        bURLlink = false;
+    }
+
+    bool CheckCanSafe()
+    {
+        if (bLinkAdd == false)
+        {
+            if (string.IsNullOrEmpty(sContentOgloszenie)) return false;
+            else return true;
+        }
+        if (bLinkAdd == true && bURLlink == true)
+        {
+            if (string.IsNullOrEmpty(sContentOgloszenie) || string.IsNullOrEmpty(sContentLink) || string.IsNullOrEmpty(sURL)) return false;
+            else return true;
+        }
+        if (bLinkAdd == true && bURLfile == true)
+        {
+            if (string.IsNullOrEmpty(sContentOgloszenie) || string.IsNullOrEmpty(sContentLink) || string.IsNullOrEmpty(sURLToFile)) return false;
+            else return true;
+        }
+        return false;
+    }
+
+}

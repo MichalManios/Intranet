@@ -1,0 +1,224 @@
+﻿@page "/"
+
+@using Microsoft.AspNetCore.Authentication;
+@using Microsoft.AspNetCore.Identity
+@using System.Linq
+@using Areszt_Śledczy_w_Łodzi.Services 
+@using ASdatabase
+@inject SignInManager<IdentityUser> signInManager
+@inject UserManager<IdentityUser> userManager
+@inject RoleManager<IdentityRole> roleManager
+@inject IZarzadzenieRepository zarzadzenieRepository  
+
+
+@inject NavigationManager NavigationManager
+@inject Areszt_Śledczy_w_Łodzi.Services.ColorServices colorServices
+@inject Areszt_Śledczy_w_Łodzi.Services.FontSizeServices fontServices
+
+<div class="row col-12"> <br /> </div>
+
+<div class="row col-12">
+    <div class="col-5">
+        <h1 id="HeaderStart">Areszt Śledczy w Łodzi</h1>
+    </div>
+
+    <AuthorizeView>
+        <Authorized>
+            <div class="col-1" id="admin">
+
+                <button @onclick="ShowDown" type="submit" class="MyButton">\/</button>
+
+            </div>
+
+            <div class="col-3" id="admin">
+
+                <button @onclick="GoToChangePassword" type="submit" class="MyButton">Zmień hasło</button>
+
+            </div>
+            <div class="col-3" id="admin">
+                <form method="post" action="Identity/Account/Logout">
+                    <button type="submit" class="MyButton">Wyloguj</button>
+                </form>
+            </div>
+            @if (bShow)
+            {
+                <div class="row col-12"> <br /> </div>
+                <div class="row col-12"> <br /> </div>
+                <div class="row col-5"> <br /> </div>
+                <div class="box row col-7">
+                    <div class="row col-1"> <br /> </div>
+                    <div class="col-3">
+                        <label class="Labels">Nazwa pliku:</label>
+                        <input class="col-12 Inputs" type="text" @bind="fileName" placeholder="Nazwa pliku" />
+                    </div>
+                    <div class="col-3">
+                        <div class="col-12"><br /></div>
+                        <input type="checkbox" id="instruction" name="instruction" @bind="bActual">
+                        @if (bActual)
+                        {
+                            <label class="Labels" for="instruction">Aktualne</label>
+                        }
+                        else
+                        {
+                            <label class="Labels" for="instruction">Nieaktualne</label>
+                        }
+                    </div>
+                    <div class="col-3" id="admin">
+
+                        <button @onclick="@(()=>loadOldZarzadzenia.Load(fileName, bActual))" type="submit" class="MyButton">Załaduj stare zarządznia</button>
+                        @if (loadOldZarzadzenia.bEndSave)
+                        {
+                            <p>Zakończono zapis do bazy.</p>
+                        }
+                    </div>
+                    <div class="col-1" id="admin">
+
+                        <button @onclick="ShowUp" type="submit" class="MyButton">/\</button>
+
+                    </div>
+                   
+                </div>
+            }
+        </Authorized>
+        <NotAuthorized>
+            <div class="col-6" id="admin">
+                <button @onclick="GoToLogin" class="MyButton">Admin</button>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+    
+</div>
+
+<div class="row col-12"> <br /> </div>
+
+
+<div class="row col-12 lines">
+    <hr id="line1" />
+</div>
+<div class="row col-12 lines">
+    <hr id="line2" />
+</div>
+<div class="row col-12 lines">
+    <hr id="line3" />
+</div>
+
+
+<div class="row col-12"> <br /> </div>
+
+<div class="row col-12">
+    <img class="img" src="/Photos/ASLodz.jpg" asp-append-version="true" />
+</div>
+
+
+
+
+
+@code {
+
+    private bool bShowActual = true;
+    private ColorViewModel colorViewModel1, colorViewModel2, colorViewModel3;
+    private Areszt_Śledczy_w_Łodzi.Models.SizeFontViewModel sizeFontViewModel1, sizeFontViewModel2, sizeFontViewModel3;
+    private string fileName { get; set; }
+    private bool bActual { get; set; }
+    private bool bShow { get; set; }
+    LoadOldZarzadzenia loadOldZarzadzenia;
+
+    void GoToLogin()
+    {
+        NavigationManager.NavigateTo("/Identity/Account/Login", true);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        loadOldZarzadzenia = new LoadOldZarzadzenia(zarzadzenieRepository);
+        fileName = "";
+        bActual = false;
+        bShow = false;
+        InitializeColor();
+        InitializeFont();
+        await CreateAdminAccount();
+    }
+
+    public void InitializeColor()
+    {
+        colorViewModel1 = new ColorViewModel()
+        {
+            ColorName = "Niebieski",
+            ColorValue = "#1d1880"
+        };
+        colorViewModel2 = new ColorViewModel()
+        {
+            ColorName = "Zielony",
+            ColorValue = "#1CD10C"
+        };
+        colorViewModel3 = new ColorViewModel()
+        {
+            ColorName = "Czerwony",
+            ColorValue = "#B80211"
+        };
+        colorServices.AddNewColor(colorViewModel1);
+        colorServices.AddNewColor(colorViewModel2);
+        colorServices.AddNewColor(colorViewModel3);
+    }
+
+    public void InitializeFont()
+    {
+        sizeFontViewModel1 = new Models.SizeFontViewModel()
+        {
+            FontSize = 20
+        };
+        sizeFontViewModel2 = new Models.SizeFontViewModel()
+        {
+            FontSize = 36
+        };
+        sizeFontViewModel3 = new Models.SizeFontViewModel()
+        {
+            FontSize = 44
+        };
+        fontServices.AddNewFontSize(sizeFontViewModel1);
+        fontServices.AddNewFontSize(sizeFontViewModel2);
+        fontServices.AddNewFontSize(sizeFontViewModel3);
+    }
+
+
+    private IList<AuthenticationScheme> ExternalLogins { get; set; }
+
+    private async Task CreateAdminAccount()
+    {
+        ExternalLogins = (await signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+
+
+        //if (userManager.FindByNameAsync("Admin").IsCompletedSuccessfully == false)
+        //{
+        var user = new IdentityUser { UserName = "Admin" };
+        var result = await userManager.CreateAsync(user, "789Ka;oz");
+        if (result.Succeeded)
+        {
+            var RoleResult = await roleManager.FindByNameAsync("ADMIN");
+            if (RoleResult == null)
+            {
+                // Create
+                await roleManager.CreateAsync(new IdentityRole("ADMIN"));
+            }
+            await userManager.AddToRoleAsync(user, "ADMIN");
+        }
+
+        // }
+
+    }
+
+    void GoToChangePassword()
+    {
+        NavigationManager.NavigateTo("Identity/Account/Manage/ChangePassword", true);
+    }
+
+    void ShowDown()
+    {
+        bShow = true;
+    }
+    void ShowUp()
+    {
+        bShow = false;
+    }
+}

@@ -1,0 +1,64 @@
+﻿<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="">Areszt Śledczy w Łodzi</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Strona startowa
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="ogloszenia">
+                <span class="oi oi-bullhorn " aria-hidden="true"></span> Ważne ogłoszenia
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="zarzadzenia">
+                <span class="oi oi-list" aria-hidden="true"></span> Zarządzenia
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="instrukcje">
+                <span class="oi oi-italic" aria-hidden="true"></span> Instrukcje
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="https://sw.gov.pl/" target="_blank">
+                <span class="oi oi-terminal" aria-hidden="true"></span> Portal SW
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="https://bip.sw.gov.pl/" target="_blank">
+                <span class="oi oi-info" aria-hidden="true"></span> Portal BIP
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="https://poczta.sw.gov.pl/" target="_blank">
+                <span class="oi oi-envelope-closed" aria-hidden="true"></span> Poczta SW
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="http://172.22.1.150:5000/" target="_blank">
+                <span class="oi oi-people" aria-hidden="true"></span> Lista obecności
+            </NavLink>
+        </li>
+
+
+    </ul>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

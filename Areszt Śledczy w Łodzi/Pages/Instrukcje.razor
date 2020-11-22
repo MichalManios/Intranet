@@ -1,0 +1,234 @@
+﻿@page "/instrukcje"
+
+@using Areszt_Śledczy_w_Łodzi.Models
+@using Areszt_Śledczy_w_Łodzi.Services
+@inject InstrukcjaServices instrukcjaServices
+@inject IFileUpload fileUpload
+@inject NavigationManager navigationManager
+
+<div class="row col-12 displayMy sticky">
+    <h1 id="HeaderStart">Instrukcje!!!</h1>
+    <h4 id="HeaderStart">Na tej stronie zamieszczane są instrukcje nie będące zarządzeniami wewnętrznymi Dyrektora Aresztu Śledczego w Łodzi.</h4>
+</div>
+
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+
+
+<AuthorizeView Roles="ADMIN">
+    <Authorized>
+        <div class="row col-12 admin">
+
+            <div class="col-12"><br /></div>
+            <div class="col-12"><br /></div>
+            <div class="col-12"><br /></div>
+
+            <div class="col-5">
+                <textarea @bind="instrukcjaViewModel.ContentOfInstruction" class="ContentLink" name="contentLink" placeholder="Tutaj wpisz treść...">@instrukcjaViewModel.ContentOfInstruction</textarea>
+            </div>
+
+            <div class="col-3" style="text-align:left;">
+                <InputFile OnChange="ChoiceFileToUpload"></InputFile>
+                @if (selectedFiles != null)
+                {
+                    <p>Nazwa pliku:@selectedFiles.Name</p>
+                    <p>Rozmiar pliku:@selectedFiles.Size B</p>
+                }
+            </div>
+            <div class="col-2" style="text-align:left;">
+                <button type="submit" class="col-12 ButtonSubmit" @onclick="UploadFile">Zamieść wybrany plik na serwerze</button>
+                <p id="Message1">@Message</p>
+            </div>
+            <div class="col-2">
+                <input type="checkbox" id="instruction" name="instruction" @bind="instrukcjaViewModel.InstructionOrOther">
+                @if (instrukcjaViewModel.InstructionOrOther)
+                {
+                    <label class="Labels" for="instruction"> Instrukcja</label>
+                }
+                else
+                {
+                    <label class="Labels" for="instruction"> Inne</label>
+                }
+            </div>
+
+        </div>
+
+        <div class="col-12"><br /></div>
+
+        <div class="col-12" style="text-align:center">
+            <button type="submit" class="col-lg-3 col-5 ButtonSubmit" @onclick="@SaveInstruction">
+                Zapisz instrukcję
+            </button>
+            @if (bCheckSave == false)
+            {
+                <p style="color:red;">@Message2</p>
+            }
+        </div>
+
+    </Authorized>
+</AuthorizeView>
+
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+<div class="col-12"><br /></div>
+
+
+@if (instrukcjaViewModels != null)
+{
+    @foreach (var instrukcja in instrukcjaViewModels.AsEnumerable().Reverse())
+    {
+        <ul class="MyList">
+            @if (instrukcja.InstructionOrOther)
+            {
+                 <li><a class="zarz" href=@instrukcja.URLToFile target="_blank">@instrukcja.ContentOfInstruction</a></li>
+
+            <AuthorizeView Roles="ADMIN">
+                <Authorized>
+                    <div class="col-4" style="display:inline-block;">
+                        <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => EditInstrukcja(instrukcja.Id))">
+                            Edytuj
+                        </button>
+                        <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => DeleteInstrukcja(instrukcja.Id))">
+                            Skasuj
+                        </button>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+            }
+        </ul>
+    }
+}
+
+
+
+        <div class="col-12"><br /></div>
+        <div class="col-12"><br /></div>
+        <div class="col-12"><br /></div>
+
+        <div class="row col-12 displayMy">
+            <h1 id="HeaderStart">Inne!!!</h1>
+        </div>
+
+        <div class="col-12"><br /></div>
+        <div class="col-12"><br /></div>
+        <div class="col-12"><br /></div>
+
+        @if (instrukcjaViewModels != null)
+        {
+            @foreach (var instrukcja in instrukcjaViewModels.AsEnumerable().Reverse())
+            {
+                <ul class="MyList">
+                    @if (!instrukcja.InstructionOrOther)
+                    {
+                         <li><a class="zarz" href=@instrukcja.URLToFile target="_blank">@instrukcja.ContentOfInstruction</a></li>
+
+                    <AuthorizeView Roles="ADMIN">
+                        <Authorized>
+                            <div class="col-4" style="display:inline-block;">
+                                <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => EditInstrukcja(instrukcja.Id))">
+                                    Edytuj
+                                </button>
+                                <button type="submit" class="col-2 ButtonSubmit" @onclick="@(() => DeleteInstrukcja(instrukcja.Id))">
+                                    Skasuj
+                                </button>
+                            </div>
+                        </Authorized>
+                    </AuthorizeView>
+                    }
+                </ul>
+            }
+        }
+
+
+
+        @code {
+
+            InstrukcjaViewModel instrukcjaViewModel;
+            IFileListEntry selectedFiles;
+            string Message { get; set; }
+            string Message2 { get; set; }
+            bool bCheckSave { get; set; }
+            string sURLToFile { get; set; }
+            int IdInstruction { get; set; }
+            List<InstrukcjaViewModel> instrukcjaViewModels;
+
+            protected override async Task OnInitializedAsync()
+            {
+                instrukcjaViewModel = new InstrukcjaViewModel();
+                Message = "Nie wybrałeś żadnego pliku";
+                Message2 = "Nie wszystkie wymagane pola zostały wypełnione!!!";
+                bCheckSave = true;
+                sURLToFile = "";
+                instrukcjaViewModels = new List<InstrukcjaViewModel>();
+                IdInstruction = -1;
+                await Task.Run(() =>
+                {
+                    instrukcjaViewModels = instrukcjaServices.GetAllInstrukcjas();
+                });
+            }
+
+            async Task ChoiceFileToUpload(IFileListEntry[] files)
+            {
+                selectedFiles = files.FirstOrDefault();
+                if (selectedFiles != null)
+                {
+                    await fileUpload.UploadAsync(selectedFiles, "Instrukcje");
+
+                    Message = $"Plik oczekuje na upload: {selectedFiles.Name}           Rozmiar: {selectedFiles.Size} Bytes";
+                }
+                this.StateHasChanged();
+            }
+
+            void UploadFile()
+            {
+                if (selectedFiles != null)
+                {
+                    Message = $"Trwa wrzucanie pliku...";
+                    fileUpload.SendToServer();
+                    Message = $"Zakończono ładowanie pliku: {selectedFiles.Name}           Rozmiar: {selectedFiles.Size} Bytes";
+                    sURLToFile = @"http://localhost:5000/Instrukcje/" + selectedFiles.Name;
+                    this.StateHasChanged();
+
+                }
+                else
+                {
+                    Message = $"Nie ma wybranego pliku do umieszczenia go na serwerze!!!";
+                }
+            }
+
+            void SaveInstruction()
+            {
+                bCheckSave = CheckCanSafe();
+                if (bCheckSave)
+                {
+                    instrukcjaViewModel.URLToFile = sURLToFile;
+                    instrukcjaServices.SaveUpdateInstrukcja(IdInstruction, instrukcjaViewModel);
+                    navigationManager.NavigateTo("/instrukcje", true);
+                }
+            }
+
+            void EditInstrukcja(int IdInstrukcja)
+            {
+                IdInstruction = IdInstrukcja;
+                var InstrukcjaVM = instrukcjaServices.GetInstrukcjaById(IdInstrukcja);
+                instrukcjaViewModel.ContentOfInstruction = InstrukcjaVM.ContentOfInstruction;
+                instrukcjaViewModel.InstructionOrOther = InstrukcjaVM.InstructionOrOther;
+                sURLToFile = InstrukcjaVM.URLToFile;
+                navigationManager.NavigateTo("/instrukcje", false);
+            }
+            void DeleteInstrukcja(int IdInstrukcja)
+            {
+                instrukcjaServices.DeleteInstrukcja(IdInstrukcja);
+                navigationManager.NavigateTo("/instrukcje", true);
+            }
+
+            bool CheckCanSafe()
+            {
+                if (instrukcjaViewModel.ContentOfInstruction == "" || instrukcjaViewModel.InstructionOrOther == false || sURLToFile == "") return false;
+                return true;
+            }
+        }
